@@ -557,6 +557,17 @@ def first_run_setup():
     update_progress(0.1, "Fetching NBA game logs...")
     run_nba_fetch(update_progress)
 
+    # Also fetch 2024-25 playoffs for model training
+    update_progress(0.3, "Fetching 2024-25 playoff data...")
+    try:
+        from nba_fetcher import fetch_player_gamelogs
+        from db import get_connection
+        conn = get_connection()
+        fetch_player_gamelogs("2024-25", conn, season_type="Playoffs")
+        conn.close()
+    except Exception as e:
+        st.warning(f"Could not fetch 2024-25 playoffs: {e}")
+
     update_progress(0.5, "Engineering features...")
     run_feature_engineering(update_progress)
 
