@@ -535,12 +535,11 @@ def render_markets_table(df, stat_filter, edge_only):
     )
 
 def first_run_setup():
-    """Run full pipeline on first boot if model files don't exist."""
     model_path = os.path.join(MODEL_DIR, "xgb_playoff_points.joblib")
     if os.path.exists(model_path):
         return
 
-    st.info("First run detected — setting up pipeline. This takes 2-3 minutes...")
+    st.info("First run detected — setting up pipeline. This takes 5-10 minutes...")
     progress = st.progress(0)
     status = st.empty()
 
@@ -551,22 +550,32 @@ def first_run_setup():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(MODEL_DIR, exist_ok=True)
 
-    from db import init_db
+    from db import init_db, get_connection
+    from nba_fetcher import fetch_player_gamelogs, fetch_team_def_ratings
     init_db()
+    conn = get_connection()
 
-    update_progress(0.1, "Fetching NBA game logs...")
-    run_nba_fetch(update_progress)
+    # Fetch all seasons needed
+    for season in ["2024-25", "2025-26"]:
+        update_progress(0.1, f"Fetching {season} regular season...")
+        try:
+            fetch_player_gamelogs(season, conn, season_type="Regular Season")
+        except Exception as e:
+            st.warning(f"Regular season fetch error {season}: {e}")
 
-    # Also fetch 2024-25 playoffs for model training
-    update_progress(0.3, "Fetching 2024-25 playoff data...")
-    try:
-        from nba_fetcher import fetch_player_gamelogs
-        from db import get_connection
-        conn = get_connection()
-        fetch_player_gamelogs("2024-25", conn, season_type="Playoffs")
-        conn.close()
-    except Exception as e:
-        st.warning(f"Could not fetch 2024-25 playoffs: {e}")
+        update_progress(0.2, f"Fetching {season} playoffs...")
+        try:
+            fetch_player_gamelogs(season, conn, season_type="Playoffs")
+        except Exception as e:
+            st.warning(f"Playoff fetch error {season}: {e}")
+
+        update_progress(0.3, f"Fetching {season} defensive ratings...")
+        try:
+            fetch_team_def_ratings(season, conn)
+        except Exception as e:
+            st.warning(f"Def ratings error {season}: {e}")
+
+    conn.close()
 
     update_progress(0.5, "Engineering features...")
     run_feature_engineering(update_progress)
