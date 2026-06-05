@@ -124,7 +124,15 @@ def run():
             n_jobs=-1,
             verbosity=0,
         )
-        model.fit(X_train, y_train, verbose=False)
+        # Weight recent Finals games more heavily
+        weights = np.ones(len(train_df))
+        finals_mask = train_df["game_date"] >= "2026-06-01"
+        conf_finals_mask = (train_df["game_date"] >= "2026-05-13") & (train_df["game_date"] < "2026-06-01")
+
+        weights[finals_mask.values] = 5.0       # Finals games weighted 5x
+        weights[conf_finals_mask.values] = 2.0  # Conference Finals weighted 2x
+
+        model.fit(X_train, y_train, sample_weight=weights, verbose=False)
 
         preds = np.clip(model.predict(X_test), 0, None)
         mae  = mean_absolute_error(y_test, preds)
