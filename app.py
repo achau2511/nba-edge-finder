@@ -12,6 +12,7 @@ import os
 import sys
 import time
 import joblib
+from networkx import display
 import requests
 import numpy as np
 import pandas as pd
@@ -534,72 +535,9 @@ def render_markets_table(df, stat_filter, edge_only):
         height=min(600, 40 + len(display) * 35),
     )
 
-def first_run_setup():
-    model_path = os.path.join(MODEL_DIR, "xgb_playoff_points.joblib")
-    if os.path.exists(model_path):
-        return
-    
-    if st.session_state.get("setup_running"):
-        st.info("Setup in progress — please wait...")
-        st.stop()
-        return
-    
-    st.session_state["setup_running"] = True
-
-    progress = st.progress(0)
-    status = st.empty()
-
-    def update_progress(val, msg):
-        progress.progress(val)
-        status.markdown(f'<div style="font-size:11px;color:#555">{msg}</div>', unsafe_allow_html=True)
-
-    os.makedirs(DATA_DIR, exist_ok=True)
-    os.makedirs(MODEL_DIR, exist_ok=True)
-
-    from db import init_db, get_connection
-    from nba_fetcher import fetch_player_gamelogs, fetch_team_def_ratings
-    init_db()
-    conn = get_connection()
-
-    # Fetch all seasons needed
-    for season in ["2024-25", "2025-26"]:
-        update_progress(0.1, f"Fetching {season} regular season...")
-        try:
-            fetch_player_gamelogs(season, conn, season_type="Regular Season")
-        except Exception as e:
-            st.warning(f"Regular season fetch error {season}: {e}")
-
-        update_progress(0.2, f"Fetching {season} playoffs...")
-        try:
-            fetch_player_gamelogs(season, conn, season_type="Playoffs")
-        except Exception as e:
-            st.warning(f"Playoff fetch error {season}: {e}")
-
-        update_progress(0.3, f"Fetching {season} defensive ratings...")
-        try:
-            fetch_team_def_ratings(season, conn)
-        except Exception as e:
-            st.warning(f"Def ratings error {season}: {e}")
-
-    conn.close()
-
-    update_progress(0.5, "Engineering features...")
-    run_feature_engineering(update_progress)
-
-    update_progress(0.75, "Training playoff model...")
-    run_playoff_model(update_progress)
-
-    progress.empty()
-    status.empty()
-    st.session_state["setup_running"] = False
-    st.success("Setup complete.")
-    st.rerun()
-
 # ── Main app ──────────────────────────────────────────────────────────────────
 
 def main():
-    first_run_setup()
-
     # Header
     col_title, col_status = st.columns([3, 1])
     with col_title:
