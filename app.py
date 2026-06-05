@@ -535,9 +535,45 @@ def render_markets_table(df, stat_filter, edge_only):
         height=min(600, 40 + len(display) * 35),
     )
 
+def first_run_setup():
+    """Run full pipeline on first boot if model files don't exist."""
+    model_path = os.path.join(MODEL_DIR, "xgb_playoff_points.joblib")
+    if os.path.exists(model_path):
+        return
+
+    st.info("First run detected — setting up pipeline. This takes 2-3 minutes...")
+    progress = st.progress(0)
+    status = st.empty()
+
+    def update_progress(val, msg):
+        progress.progress(val)
+        status.markdown(f'<div style="font-size:11px;color:#555">{msg}</div>', unsafe_allow_html=True)
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    from db import init_db
+    init_db()
+
+    update_progress(0.1, "Fetching NBA game logs...")
+    run_nba_fetch(update_progress)
+
+    update_progress(0.5, "Engineering features...")
+    run_feature_engineering(update_progress)
+
+    update_progress(0.75, "Training playoff model...")
+    run_playoff_model(update_progress)
+
+    progress.empty()
+    status.empty()
+    st.success("Setup complete.")
+    st.rerun()
+
 # ── Main app ──────────────────────────────────────────────────────────────────
 
 def main():
+    first_run_setup()
+
     # Header
     col_title, col_status = st.columns([3, 1])
     with col_title:
