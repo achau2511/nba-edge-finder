@@ -1,8 +1,8 @@
 nba_api==1.4.1
 requests==2.31.0
 pandas>=2.0,<3.0
-numpy==1.26.4
-scikit-learn==1.4.0
+numpy>=1.26,<3.0
+scikit-learn>=1.4.0
 xgboost==2.0.3
 plotly==5.18.0
 streamlit==1.31.0
@@ -10,3 +10,4 @@ sqlalchemy==2.0.25
 python-dotenv==1.0.0
 tqdm==4.66.1
 scipy>=1.10
+pillow>=10.3.0
