@@ -538,10 +538,13 @@ def first_run_setup():
     model_path = os.path.join(MODEL_DIR, "xgb_playoff_points.joblib")
     if os.path.exists(model_path):
         return
-
-    st.info("First run detected — setting up pipeline. This takes 5-10 minutes...")
-    progress = st.progress(0)
-    status = st.empty()
+    
+    if st.session_state.get("setup_running"):
+        st.info("Setup in progress — please wait...")
+        st.stop()
+        return
+    
+    st.session_state["setup_running"] = True
 
     def update_progress(val, msg):
         progress.progress(val)
@@ -585,6 +588,7 @@ def first_run_setup():
 
     progress.empty()
     status.empty()
+    st.session_state["setup_running"] = False
     st.success("Setup complete.")
     st.rerun()
 
