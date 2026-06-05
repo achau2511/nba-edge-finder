@@ -546,6 +546,9 @@ def first_run_setup():
     
     st.session_state["setup_running"] = True
 
+    progress = st.progress(0)
+    status = st.empty() 
+
     def update_progress(val, msg):
         progress.progress(val)
         status.markdown(f'<div style="font-size:11px;color:#555">{msg}</div>', unsafe_allow_html=True)
