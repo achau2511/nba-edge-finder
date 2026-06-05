@@ -547,7 +547,7 @@ def first_run_setup():
     st.session_state["setup_running"] = True
 
     progress = st.progress(0)
-    status = st.empty() 
+    status = st.empty()
 
     def update_progress(val, msg):
         progress.progress(val)
