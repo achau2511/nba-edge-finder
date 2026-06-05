@@ -102,7 +102,13 @@ def parse_active_market(market: dict, stat_type: str) -> dict | None:
         return None
 
     occurrence = market.get("occurrence_datetime", "")
-    game_date = occurrence[:10] if occurrence else None
+    from datetime import datetime, timezone, timedelta
+    if occurrence:
+        utc_dt = datetime.fromisoformat(occurrence.replace("Z", "+00:00"))
+        et_dt = utc_dt - timedelta(hours=4)  # UTC to ET
+        game_date = et_dt.strftime("%Y-%m-%d")
+    else:
+        game_date = None
     if not game_date:
         return None
 
@@ -286,7 +292,7 @@ def run():
                                 "kalshi_prob", "edge"]].to_string(index=False))
 
             best_bets = positive_edge[
-                (positive_edge["edge"] > 0.15) &
+                (positive_edge["edge"] > 0.12) &
                 (positive_edge["model_prob"] > 0.75)
             ].sort_values("edge", ascending=False)
 

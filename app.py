@@ -228,16 +228,16 @@ FEATURE_COLS = {
 TEAMS = {
     "Jalen Brunson":"NYK","OG Anunoby":"NYK","Karl-Anthony Towns":"NYK",
     "Mikal Bridges":"NYK","Josh Hart":"NYK","Mitchell Robinson":"NYK",
-    "Miles McBride":"NYK","Landry Shamet":"NYK","Julian Champagnie":"NYK",
+    "Miles McBride":"NYK","Landry Shamet":"NYK","Julian Champagnie":"SAS",
     "Victor Wembanyama":"SAS","Stephon Castle":"SAS","De'Aaron Fox":"SAS",
     "Devin Vassell":"SAS","Keldon Johnson":"SAS","Dylan Harper":"SAS",
-    "Jose Alvarado":"SAS","Chris Paul":"SAS","Zach Collins":"SAS",
+    "Jose Alvarado":"NYK","Zach Collins":"SAS",
 }
 
 STAT_EMOJI = {"points":"🏀","rebounds":"💪","assists":"🎯"}
 KALSHI_FEE  = 0.05
 EDGE_THRESH = 0.07
-BEST_EDGE   = 0.15
+BEST_EDGE   = 0.12
 BEST_PROB   = 0.75
 KALSHI_REFRESH_SECS = 600  # 10 minutes
 
@@ -325,7 +325,13 @@ def fetch_kalshi_markets():
                     player_name = title.split(":")[0].strip()
                     line = m.get("floor_strike")
                     occurrence = m.get("occurrence_datetime", "")
-                    game_date = occurrence[:10] if occurrence else None
+                    from datetime import datetime, timezone, timedelta
+                    if occurrence:
+                        utc_dt = datetime.fromisoformat(occurrence.replace("Z", "+00:00"))
+                        et_dt = utc_dt - timedelta(hours=4)  # UTC to ET
+                        game_date = et_dt.strftime("%Y-%m-%d")
+                    else:
+                        game_date = None
                     yes_ask = m.get("yes_ask_dollars")
                     yes_bid = m.get("yes_bid_dollars")
                     if not all([line, game_date, yes_ask, yes_bid]):
@@ -456,20 +462,30 @@ def render_best_bets(df):
             """, unsafe_allow_html=True)
 
 
-def render_markets_table(df, stat_filter, edge_only):
+def render_markets_table(df, stat_filter, edge_only, show_stat_col=False):
     filtered = df.copy()
     if stat_filter != "All":
         filtered = filtered[filtered["stat"] == stat_filter.lower()]
     if edge_only:
         filtered = filtered[filtered["edge"] > EDGE_THRESH]
-    filtered = filtered.sort_values("edge", ascending=False)
+    filtered["score"] = filtered["model_prob"] * filtered["edge"]
+    filtered["sort_key"] = filtered.apply(
+        lambda r: r["score"] if r["edge"] > 0.05 else -1 + r["model_prob"] * 0.01,
+        axis=1
+    )
+    filtered = filtered.sort_values("sort_key", ascending=False).drop(columns=["score", "sort_key"])
 
     if filtered.empty:
         st.markdown('<div class="warning-box">No markets match the current filters.</div>', unsafe_allow_html=True)
         return
 
-    display = filtered[["player","team","line","prediction","model_prob","kalshi_prob","edge"]].copy()
-    display.columns = ["Player","Team","Line","Model Pred","Model %","Kalshi %","Edge"]
+    cols = ["player","team","line","prediction","model_prob","kalshi_prob","edge"]
+    col_names = ["Player","Team","Line","Model Pred","Model %","Kalshi %","Edge"]
+    if show_stat_col:
+        cols = ["player","team","stat","line","prediction","model_prob","kalshi_prob","edge"]
+        col_names = ["Player","Team","Stat","Line","Model Pred","Model %","Kalshi %","Edge"]
+    display = filtered[cols].copy()
+    display.columns = col_names
     display["Line"] = display["Line"].apply(lambda x: f"{float(x):.1f}")
     def style_table(df):
         styles = pd.DataFrame("", index=df.index, columns=df.columns)
@@ -669,7 +685,7 @@ def main():
             render_markets_table(predictions_df, "Assists", edge_only)
 
         st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin:24px 0 8px">All Markets</div>', unsafe_allow_html=True)
-        render_markets_table(predictions_df, "All", edge_only)
+        render_markets_table(predictions_df, "All", edge_only, show_stat_col=True)
     # Auto-refresh timestamp
     st.markdown(f"""
     <div style="text-align:center;margin-top:32px;font-size:10px;color:#222;letter-spacing:.1em">
