@@ -62,6 +62,7 @@ def fetch_player_gamelogs(season: str, conn: sqlite3.Connection, season_type: st
         "FG3_PCT":      "fg3_pct",
         "FT_PCT":       "ft_pct",
         "PLUS_MINUS":   "plus_minus",
+        "FG3M":         "fg3m",
     })
 
     # Derive helper columns
@@ -75,7 +76,7 @@ def fetch_player_gamelogs(season: str, conn: sqlite3.Connection, season_type: st
     keep = [
         "player_id", "player_name", "season", "game_id", "game_date",
         "matchup", "wl", "min", "pts", "reb", "ast", "stl", "blk",
-        "fg_pct", "fg3_pct", "ft_pct", "plus_minus", "is_home", "opponent_abbr",
+        "fg_pct", "fg3_pct", "ft_pct", "plus_minus", "is_home", "opponent_abbr", "fg3m",
     ]
     df = df[keep].dropna(subset=["pts", "reb", "ast"])
 
@@ -86,16 +87,16 @@ def fetch_player_gamelogs(season: str, conn: sqlite3.Connection, season_type: st
             cursor.execute("""
                 INSERT OR REPLACE INTO player_gamelogs
                 (player_id, player_name, season, game_id, game_date, matchup,
-                 wl, min, pts, reb, ast, stl, blk, fg_pct, fg3_pct, ft_pct,
-                 plus_minus, is_home, opponent_abbr)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                wl, min, pts, reb, ast, stl, blk, fg_pct, fg3_pct, ft_pct,
+                plus_minus, is_home, opponent_abbr, fg3m)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 int(row.player_id), row.player_name, row.season,
                 row.game_id, row.game_date, row.matchup,
                 row.wl, row.get("min"), row.pts, row.reb, row.ast,
                 row.get("stl"), row.get("blk"), row.get("fg_pct"),
                 row.get("fg3_pct"), row.get("ft_pct"), row.get("plus_minus"),
-                int(row.is_home), row.opponent_abbr,
+                int(row.is_home), row.opponent_abbr, row.get("fg3m"),
             ))
             inserted += 1
         except Exception as e:

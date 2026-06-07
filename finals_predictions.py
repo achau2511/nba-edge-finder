@@ -48,12 +48,21 @@ FEATURE_COLS = {
         "days_rest", "is_b2b", "is_home", "game_num_in_season",
         "def_rating", "opp_pts_paint", "opp_pts_fb",
     ],
+    "threes": [
+        "fg3m_mean_5g", "fg3m_mean_10g", "fg3m_mean_20g",
+        "fg3m_std_5g",  "fg3m_std_10g",  "fg3m_std_20g",
+        "min_mean_5g",  "min_mean_10g",  "min_mean_20g",
+        "fg3m_trend_3g",
+        "days_rest", "is_b2b", "is_home", "game_num_in_season",
+        "def_rating", "opp_pts_paint", "opp_pts_fb",
+    ],
 }
 
 KALSHI_SERIES = {
     "KXNBAPTS": "points",
     "KXNBAREB": "rebounds",
     "KXNBAAST": "assists",
+    "KXNBA3PT": "threes",
 }
 
 import requests

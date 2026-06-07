@@ -56,6 +56,14 @@ FEATURE_COLS = {
         "days_rest", "is_b2b", "is_home", "game_num_in_season",
         "def_rating", "opp_pts_paint", "opp_pts_fb",
     ],
+    "threes": [
+        "fg3m_mean_5g", "fg3m_mean_10g", "fg3m_mean_20g",
+        "fg3m_std_5g",  "fg3m_std_10g",  "fg3m_std_20g",
+        "min_mean_5g",  "min_mean_10g",  "min_mean_20g",
+        "fg3m_trend_3g",
+        "days_rest", "is_b2b", "is_home", "game_num_in_season",
+        "def_rating", "opp_pts_paint", "opp_pts_fb",
+    ],
 }
 
 
@@ -79,7 +87,7 @@ def load_playoff_features(stat: str) -> pd.DataFrame:
 
 
 def run():
-    for stat, label in [("points", "Points"), ("rebounds", "Rebounds"), ("assists", "Assists")]:
+    for stat, label in [("points", "Points"), ("rebounds", "Rebounds"), ("assists", "Assists"), ("threes", "Threes")]:
         print(f"\n{'='*55}")
         print(f"Stat: {label.upper()} — Playoff Model")
         print(f"{'='*55}")
@@ -143,6 +151,8 @@ def run():
         # Save model
         model_path = os.path.join(MODEL_DIR, f"xgb_playoff_{stat}.joblib")
         joblib.dump(model, model_path)
+        print(f"Saved to: {model_path}")
+
 
         # Build residual map from training data
         train_df = train_df.copy()

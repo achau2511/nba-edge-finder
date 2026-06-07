@@ -164,14 +164,14 @@ def run():
     conn = get_connection()
     df = pd.read_sql("""
         SELECT player_id, player_name, season, game_id, game_date,
-               matchup, min, pts, reb, ast, is_home, opponent_abbr
+            matchup, min, pts, reb, ast, fg3m, is_home, opponent_abbr
         FROM player_gamelogs
         WHERE min IS NOT NULL AND min > 0
     """, conn)
     conn.close()
     print(f"  {len(df):,} rows loaded.")
 
-    for stat, label in [("pts", "points"), ("reb", "rebounds"), ("ast", "assists")]:
+    for stat, label in [("pts", "points"), ("reb", "rebounds"), ("ast", "assists"), ("fg3m", "threes")]:
         print(f"\nBuilding features for {label}...")
         features = build_features_for_stat(df, stat)
         out_path = os.path.join(OUTPUT_DIR, f"features_{label}.csv")
