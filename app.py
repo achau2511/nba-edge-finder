@@ -498,6 +498,8 @@ def generate_polymarket_predictions():
     markets_df["game_date"] = game_date
 
     markets_df.rename(columns={"over_price": "kalshi_prob"}, inplace=True)
+    # Keep under_price if present for under edge calculations
+    has_under_price = "under_price" in markets_df.columns
 
     # Reuse same prediction logic
     all_preds = []
@@ -539,6 +541,8 @@ def generate_polymarket_predictions():
             player_id = int(latest.get("player_id", -1))
             prob = fp.predict_prob(pred, market["line"], player_id, stat_type, residual_map)
             edge = prob - market["kalshi_prob"]
+            under_price = float(market["under_price"]) if has_under_price and pd.notna(market.get("under_price")) else (1 - market["kalshi_prob"])
+            under_edge = round((1 - prob) - under_price, 3)
             all_preds.append({
                 "player":      market["player"],
                 "team":        market["team"],
@@ -548,7 +552,9 @@ def generate_polymarket_predictions():
                 "prediction":  round(pred, 1),
                 "model_prob":  round(prob, 3),
                 "kalshi_prob": round(market["kalshi_prob"], 3),
+                "under_price": round(under_price, 3),
                 "edge":        round(edge, 3),
+                "under_edge":  under_edge,
                 "volume":      market.get("volume", 0),
             })
     return pd.DataFrame(all_preds) if all_preds else pd.DataFrame()
@@ -608,7 +614,10 @@ def render_best_bets(df, source="kalshi"):
             """, unsafe_allow_html=True)
 
 def render_best_unders(df, source="kalshi"):
-    best = df[(df["edge"] < -0.12) & (df["model_prob"] < 0.25)].sort_values("edge", ascending=True)
+    if "under_edge" not in df.columns:
+        st.markdown('<div class="warning-box">No under edge data available.</div>', unsafe_allow_html=True)
+        return
+    best = df[(df["under_edge"] > 0.12) & ((1 - df["model_prob"]) > 0.75)].sort_values("under_edge", ascending=False)
     if best.empty:
         st.markdown('<div class="warning-box">No strong under picks right now.</div>', unsafe_allow_html=True)
         return
@@ -618,6 +627,8 @@ def render_best_unders(df, source="kalshi"):
         bg = "#0d1220" if source == "poly" else "#1a0d0d"
         border = "#1a2a4a" if source == "poly" else "#2e1a1a"
         market_label = "POLYMARKET %" if source == "poly" else "KALSHI %"
+        under_mkt_pct = int(row.get("under_price", 1 - row["kalshi_prob"]) * 100)
+        under_model_pct = int((1 - row["model_prob"]) * 100)
 
         with cols[i % 4]:
             st.markdown(f"""
@@ -625,8 +636,8 @@ def render_best_unders(df, source="kalshi"):
                 <div class="bet-player">{row['player']}</div>
                 <div class="bet-detail">{team_pill(row['team'])} {STAT_EMOJI[row['stat']]} under {row['line']} {row['stat']}</div>
                 <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px">
-                    <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#e05555;letter-spacing:.04em">{int(row['edge']*100)}</div><div style="font-size:10px;color:#333;letter-spacing:.1em">EDGE</div></div>
-                    <div style="text-align:right"><div style="font-size:20px;font-family:'Bebas Neue',sans-serif;color:#e8e4d9">{int(row['model_prob']*100)}%</div><div style="font-size:10px;color:#333;letter-spacing:.1em">MODEL PROB</div></div>
+                    <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#00d964;letter-spacing:.04em">+{int(row['under_edge']*100)}</div><div style="font-size:10px;color:#333;letter-spacing:.1em">EDGE</div></div>
+                    <div style="text-align:right"><div style="font-size:20px;font-family:'Bebas Neue',sans-serif;color:#e8e4d9">{under_model_pct}%</div><div style="font-size:10px;color:#333;letter-spacing:.1em">MODEL PROB</div></div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
                     <div style="background:#0a0a0d;border:1px solid {border};border-radius:4px;padding:8px">
@@ -635,11 +646,11 @@ def render_best_unders(df, source="kalshi"):
                     </div>
                     <div style="background:#0a0a0d;border:1px solid {border};border-radius:4px;padding:8px">
                         <div style="font-size:9px;color:#333;letter-spacing:.1em;margin-bottom:2px">MODEL</div>
-                        <div style="font-size:13px;font-weight:500">{int(row['model_prob']*100)}%</div>
+                        <div style="font-size:13px;font-weight:500">{under_model_pct}%</div>
                     </div>
                     <div style="background:#0a0a0d;border:1px solid {border};border-radius:4px;padding:8px">
                         <div style="font-size:9px;color:#333;letter-spacing:.1em;margin-bottom:2px">{market_label}</div>
-                        <div style="font-size:13px;font-weight:500">{int(row['kalshi_prob']*100)}%</div>
+                        <div style="font-size:13px;font-weight:500">{under_mkt_pct}%</div>
                     </div>
                 </div>
             </div>
@@ -865,7 +876,7 @@ def main():
 
 
     # Tabs
-    tab1, tab2, tab3 = st.tabs(["⚑ Best Bets", "📊 Kalshi Markets", "🟣 Polymarket"])
+    tab1, tab2, tab3, tab4 = st.tabs(["⚑ Best Bets", "📊 Kalshi Markets", "🟣 Poly Overs", "🔵 Poly Unders"])
 
     with tab1:
         st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin-bottom:12px;letter-spacing:.08em">KALSHI BEST BETS</div>', unsafe_allow_html=True)
@@ -923,8 +934,93 @@ def main():
                 st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin-bottom:8px">🎳 Threes</div>', unsafe_allow_html=True)
                 render_markets_table(poly_df, "Threes", edge_only_poly, market_label="Polymarket %")
             
-            st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin:24px 0 8px">All Polymarket</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin:24px 0 8px">All Polymarket Overs</div>', unsafe_allow_html=True)
             render_markets_table(poly_df, "All", edge_only_poly, show_stat_col=True, market_label="Polymarket %")
+
+    with tab4:
+        st.markdown('<div class="section-header">Polymarket under markets — sorted by under edge</div>', unsafe_allow_html=True)
+        if poly_df.empty or "under_edge" not in poly_df.columns:
+            st.markdown('<div class="warning-box">No Polymarket under data available.</div>', unsafe_allow_html=True)
+        else:
+            edge_only_unders = st.checkbox("Under edge > 0.07 only", value=False, key="poly_under_edge")
+
+            def render_unders_table(df, stat_filter, edge_only):
+                filtered = df.copy()
+                if stat_filter != "All":
+                    filtered = filtered[filtered["stat"] == stat_filter.lower()]
+                if edge_only:
+                    filtered = filtered[filtered["under_edge"] > 0.07]
+                filtered = filtered.sort_values("under_edge", ascending=False)
+                if filtered.empty:
+                    st.markdown('<div class="warning-box">No markets match the current filters.</div>', unsafe_allow_html=True)
+                    return
+
+                cols = ["player", "team", "line", "prediction", "model_prob", "under_price", "under_edge"]
+                col_names = ["Player", "Team", "Line", "Model Pred", "Under Model %", "Under Mkt %", "Under Edge"]
+                display = filtered[cols].copy()
+                display.columns = col_names
+                display["Line"] = display["Line"].apply(lambda x: f"{float(x):.1f}")
+                display["Under Model %"] = ((1 - filtered["model_prob"]) * 100).round(0).astype(int).astype(str) + "%"
+                display["Under Mkt %"] = (filtered["under_price"] * 100).round(0).astype(int).astype(str) + "%"
+                display["Under Edge"] = filtered["under_edge"].apply(lambda x: f"+{int(x*100)}" if x > 0 else str(int(x*100)))
+                display["Model Pred"] = filtered["prediction"].astype(str)
+
+                def style_unders(df):
+                    styles = pd.DataFrame("", index=df.index, columns=df.columns)
+                    for i, team in enumerate(df["Team"]):
+                        if team == "NYK":
+                            styles.iloc[i, df.columns.get_loc("Player")] = "color: #f58426; font-weight: 500"
+                        elif team == "SAS":
+                            styles.iloc[i, df.columns.get_loc("Player")] = "color: #c0c0c0; font-weight: 500"
+                    for i, edge in enumerate(df["Under Edge"]):
+                        val = float(str(edge).replace("+", ""))
+                        if val > 15:
+                            styles.iloc[i, df.columns.get_loc("Under Edge")] = "color: #00d964; font-weight: 500"
+                        elif val > 7:
+                            styles.iloc[i, df.columns.get_loc("Under Edge")] = "color: #7ab82a; font-weight: 500"
+                        elif val < 0:
+                            styles.iloc[i, df.columns.get_loc("Under Edge")] = "color: #993333"
+                    for i, val in enumerate(df["Under Model %"]):
+                        pct = int(str(val).replace("%", ""))
+                        if pct >= 80:
+                            styles.iloc[i, df.columns.get_loc("Under Model %")] = "color: #00d964; font-weight: 500"
+                        elif pct >= 60:
+                            styles.iloc[i, df.columns.get_loc("Under Model %")] = "color: #c8f250"
+                        elif pct >= 40:
+                            styles.iloc[i, df.columns.get_loc("Under Model %")] = "color: #f0c040"
+                        else:
+                            styles.iloc[i, df.columns.get_loc("Under Model %")] = "color: #e05555"
+                    for i, (pred, line) in enumerate(zip(display["Model Pred"], filtered["line"])):
+                        diff = float(line) - float(pred)  # under: pred below line is good
+                        if diff > 3:
+                            styles.iloc[i, df.columns.get_loc("Model Pred")] = "color: #00d964; font-weight: 500"
+                        elif diff > 0:
+                            styles.iloc[i, df.columns.get_loc("Model Pred")] = "color: #7ab82a"
+                        elif diff > -3:
+                            styles.iloc[i, df.columns.get_loc("Model Pred")] = "color: #f0c040"
+                        else:
+                            styles.iloc[i, df.columns.get_loc("Model Pred")] = "color: #e05555"
+                    return styles
+
+                styled = display.style.apply(style_unders, axis=None)
+                st.dataframe(styled, use_container_width=True, hide_index=True, height=min(600, 40 + len(display) * 35))
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin-bottom:8px">🏀 Points</div>', unsafe_allow_html=True)
+                render_unders_table(poly_df, "Points", edge_only_unders)
+            with col2:
+                st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin-bottom:8px">💪 Rebounds</div>', unsafe_allow_html=True)
+                render_unders_table(poly_df, "Rebounds", edge_only_unders)
+            with col3:
+                st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin-bottom:8px">🎯 Assists</div>', unsafe_allow_html=True)
+                render_unders_table(poly_df, "Assists", edge_only_unders)
+            with col4:
+                st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin-bottom:8px">🎳 Threes</div>', unsafe_allow_html=True)
+                render_unders_table(poly_df, "Threes", edge_only_unders)
+
+            st.markdown('<div style="font-size:13px;font-weight:500;color:#e8e4d9;margin:24px 0 8px">All Polymarket Unders</div>', unsafe_allow_html=True)
+            render_unders_table(poly_df, "All", edge_only_unders)
     
     # Auto-refresh timestamp
     st.markdown(f"""

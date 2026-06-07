@@ -81,8 +81,8 @@ def parse_question(question):
 
 def get_prices(market):
     """Extract Over and Under prices from marketSides.
-    On Polymarket US player props: long=False is the Over (Yes) side,
-    long=True is the Under (No) side.
+    On Polymarket US: long=False/description='No' is the OVER side shown on app,
+    long=True/description='Yes' is the UNDER side.
     Returns (over_price, under_price)."""
     over_price = None
     under_price = None
@@ -92,7 +92,7 @@ def get_prices(market):
             price = round(float(price_str), 4)
         except (ValueError, TypeError):
             continue
-        if side.get("long") is False:
+        if side.get("description") == "No":
             over_price = price
         else:
             under_price = price
@@ -157,20 +157,17 @@ def fetch_polymarket_props():
             continue
         seen.add(key)
 
-        yes_price, no_price = get_prices(m)
-        if yes_price is None or no_price is None:
-            continue
-        # Filter illiquid markets: liquid markets have over + under > 1.05
-        # Illiquid placeholders have over + under ≈ 1.0 (near-zero spread)
-        if yes_price + no_price < 1.05:
+        over_price, under_price = get_prices(m)
+        if over_price is None or under_price is None:
             continue
 
         props.append({
-            "player":     player,
-            "team":       TEAMS[player],
-            "stat":       stat,
-            "line":       line - 0.5,  # "at least N" means line is N-0.5
-            "over_price": yes_price,
+            "player":      player,
+            "team":        TEAMS[player],
+            "stat":        stat,
+            "line":        line - 0.5,
+            "over_price":  over_price,
+            "under_price": 1-under_price,
         })
 
     print(f"Found {len(props)} unique player prop markets.")
@@ -214,7 +211,7 @@ if __name__ == "__main__":
         import pandas as pd
         df = pd.DataFrame(props)
         print("\nSample:")
-        print(df[["player", "stat", "line", "over_price"]].head(15).to_string(index=False))
+        print(df[["player", "stat", "line", "over_price", "under_price"]].head(15).to_string(index=False))
         save_polymarket_data(props)
     else:
         print("No markets found. Event ID may have changed — check polymarket_fetcher.py.")

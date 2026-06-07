@@ -13,7 +13,7 @@ Built during the 2026 NBA Finals (Knicks vs Spurs).
 3. Trains XGBoost regression models on playoff data — tuned for playoff game contexts
 4. Fetches live Kalshi and Polymarket player prop prices automatically
 5. Converts point estimates to probabilities using empirical residual distributions
-6. Flags markets where model probability exceeds the market's implied price
+6. Identifies edges on both overs and unders across both markets
 7. Displays everything in a live Streamlit dashboard
 
 ---
@@ -24,15 +24,16 @@ Built during the 2026 NBA Finals (Knicks vs Spurs).
 streamlit run app.py
 ```
 
-The dashboard has three tabs:
+The dashboard has four tabs:
 
-- **Best Bets** — Kalshi and Polymarket overs with edge > 0.12 and model probability > 0.75, ranked by edge × model probability
+- **Best Bets** — Kalshi best overs, Polymarket best overs, and Polymarket best unders, all filtered by edge > 0.12 and model probability > 0.75
 - **Kalshi Markets** — full predictions table across points, rebounds, assists, and threes with color-coded edge and model probability
-- **Polymarket** — same table using auto-fetched Polymarket prices
+- **Poly Overs** — Polymarket over markets with edge and model probability
+- **Poly Unders** — Polymarket under markets sorted by under edge, with under model probability vs market under price
 
 **Sidebar buttons:**
-- **⚡ Refresh Prices Only** — re-fetches live Kalshi and Polymarket prices instantly. Use this before tip-off.
-- **🔄 Refresh Predictions** — runs the full post-game pipeline: fetches new box scores, re-engineers features, retrains the model. Use this after each game.
+- **⚡ Refresh Prices Only** — re-fetches live Kalshi and Polymarket prices instantly. Use before tip-off.
+- **🔄 Refresh Predictions** — runs the full post-game pipeline: fetches new box scores, re-engineers features, retrains the model. Use after each game.
 
 Both markets auto-refresh every 10 minutes in the background.
 
@@ -72,11 +73,21 @@ Brier scores: Points 0.155, Rebounds 0.183, Assists 0.156 vs 0.25 naive baseline
 
 ---
 
+## Edge Calculation
+
+**Over edge:** `model_prob − market_over_price`
+
+**Under edge:** `(1 − model_prob) − market_under_price`
+
+Best bets require edge > 0.12 and model probability > 0.75. Under best bets use the same thresholds applied to the under side.
+
+---
+
 ## Market Data
 
 **Kalshi** — public REST API, no authentication required. Fetches open markets per series ticker (`KXNBAPTS`, `KXNBAREB`, `KXNBAAST`, `KXNBA3PT`). Prices are mid of yes bid/ask.
 
-**Polymarket** — fetched via `gateway.polymarket.us/v1/search`. Returns 191 live player prop markets per game with correct over prices. Illiquid markets (spread < 1.05) are filtered out automatically. No authentication required.
+**Polymarket** — fetched via `gateway.polymarket.us/v1/search`. Returns ~178 player prop markets per game covering points, rebounds, assists, and threes. Both over and under prices are stored. No authentication required.
 
 ---
 
@@ -113,6 +124,7 @@ nba-edge-finder/
 ├── finals_predictions.py     Live predictions vs Kalshi markets
 ├── playoff_model.py          Playoff-specific XGBoost trainer
 ├── polymarket_fetcher.py     Auto-fetches Polymarket player prop prices
+├── push_to_supabase.py       Pushes predictions and prices to Supabase
 ├── polymarket_data.py        Auto-generated Polymarket market data (not tracked)
 ├── src/
 │   ├── ingestion/
@@ -126,11 +138,9 @@ nba-edge-finder/
 │       ├── stat_predictor.py Regular season model (reference)
 │       └── prob_converter.py Probability conversion utilities
 ├── data/
-│   ├── nba_edge.db           SQLite database (not tracked)
 │   ├── models/               Trained XGBoost models (not tracked)
 │   └── processed/            Feature CSVs (not tracked)
-├── requirements.txt
-└── WRITEUP.md
+└── requirements.txt
 ```
 
 ---
@@ -142,11 +152,11 @@ nba-edge-finder/
 | NBA data | `nba_api` |
 | Kalshi data | Kalshi REST API (public, no auth) |
 | Polymarket data | `gateway.polymarket.us` REST API (public, no auth) |
-| Storage | SQLite |
+| Storage | SQLite + Supabase |
 | Feature engineering | pandas, numpy |
 | Modeling | XGBoost, scikit-learn |
 | Probability conversion | scipy, empirical residuals |
-| Dashboard | Streamlit, Plotly |
+| Dashboard | Streamlit |
 
 ---
 
