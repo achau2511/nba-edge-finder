@@ -476,6 +476,7 @@ def generate_polymarket_predictions():
         return pd.DataFrame()
 
     # Use same game date as active Kalshi markets
+    from datetime import datetime as dt
     try:
         kalshi_resp = requests.get(
             "https://external-api.kalshi.com/trade-api/v2/markets",
@@ -485,15 +486,14 @@ def generate_polymarket_predictions():
         kalshi_data = kalshi_resp.json()
         if kalshi_data.get("markets"):
             occurrence = kalshi_data["markets"][0].get("occurrence_datetime", "")
-            from datetime import datetime, timedelta, timezone
             if occurrence:
                 game_date = occurrence[:10]
             else:
-                game_date = datetime.now().strftime("%Y-%m-%d")
+                game_date = dt.now().strftime("%Y-%m-%d")
         else:
-            game_date = datetime.now().strftime("%Y-%m-%d")
+            game_date = dt.now().strftime("%Y-%m-%d")
     except:
-        game_date = datetime.now().strftime("%Y-%m-%d")
+        game_date = dt.now().strftime("%Y-%m-%d")
 
     markets_df["game_date"] = game_date
 
@@ -752,6 +752,10 @@ def main():
     with st.spinner("Fetching markets and generating predictions..."):
         predictions_df = generate_predictions()
         poly_df = generate_polymarket_predictions()
+
+    if predictions_df.empty or "game_date" not in predictions_df.columns:
+        st.warning("No active Kalshi markets found. Markets may be closed between games.")
+        return
 
     game_dates = predictions_df["game_date"].unique()
     next_game = sorted(game_dates)[0] if len(game_dates) > 0 else "Unknown"

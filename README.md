@@ -138,9 +138,11 @@ nba-edge-finder/
 │       ├── stat_predictor.py Regular season model (reference)
 │       └── prob_converter.py Probability conversion utilities
 ├── data/
+│   ├── nba_edge.db           SQLite database (not tracked)
 │   ├── models/               Trained XGBoost models (not tracked)
 │   └── processed/            Feature CSVs (not tracked)
-└── requirements.txt
+├── requirements.txt
+└── WRITEUP.md
 ```
 
 ---
@@ -162,44 +164,71 @@ nba-edge-finder/
 
 ## Live Track Record — 2026 NBA Finals
 
-The model generates forward-looking predictions before each game and tracks real outcomes.
+All picks were selected from the dashboard's Best Bets list before tip-off.
 
-### Game 1 — June 4, 2026 (Spurs win)
+### Game 1 — June 4, 2026 · Knicks 105, Spurs 95 (Knicks lead 1-0)
 
 **Kalshi:**
 
-| Pick | Line | Result |
-|------|------|--------|
-| KAT over 3.5 assists | 3.5 | ✅ |
-| Castle over 5.5 rebounds | 5.5 | ✅ |
-| Bridges over 9.5 points | 9.5 | ❌ |
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| KAT over 3.5 assists | 3.5 | 4 ast | ✅ |
+| Castle over 5.5 rebounds | 5.5 | 8 reb | ✅ |
+| Bridges over 9.5 points | 9.5 | 9 pts | ❌ |
 
 **2-1 on Game 1 Kalshi picks.**
 
 ---
 
-### Game 2 — June 6, 2026 (Spurs win)
+### Game 2 — June 6, 2026 · Knicks 105, Spurs 104 (Knicks lead 2-0)
 
 **Kalshi:**
 
-| Pick | Line | Result |
-|------|------|--------|
-| KAT over 3.5 assists | 3.5 | ✅ |
-| Brunson over 19.5 points | 19.5 | ✅ |
-| Castle over 3.5 rebounds | 3.5 | ✅ |
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| KAT over 3.5 assists | 3.5 | 4 ast | ✅ |
+| Brunson over 19.5 points | 19.5 | 20 pts | ✅ |
+| Castle over 3.5 rebounds | 3.5 | 5 reb | ✅ |
 
 **3-0 on Game 2 Kalshi picks.**
 
 **Polymarket:**
 
-| Pick | Line | Result |
-|------|------|--------|
-| KAT over 3.5 assists | 3.5 | ✅ |
-| Wembanyama over 1.5 threes | 1.5 | ✅ |
-| Wembanyama under 12.5 rebounds | 12.5 | ✅ |
-| Brunson under 6.5 assists | 6.5 | ✅ |
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| KAT over 3.5 assists | 3.5 | 4 ast | ✅ |
+| Wembanyama over 1.5 threes | 1.5 | 2 threes | ✅ |
+| Wembanyama under 12.5 rebounds | 12.5 | 9 reb | ✅ |
+| Brunson under 6.5 assists | 6.5 | 6 ast | ✅ |
 
 **4-0 on Game 2 Polymarket picks.**
+
+---
+
+### Game 3 — June 9, 2026 · Spurs 115, Knicks 111 (Knicks lead 2-1)
+
+**Kalshi:**
+
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| Champagnie over 1.5 threes | 1.5 | 3 threes | ✅ |
+| Vassell over 9.5 points | 9.5 | 11 pts | ✅ |
+| Castle over 14.5 points | 14.5 | 23 pts | ✅ |
+| Castle over 3.5 rebounds | 3.5 | 5 reb | ✅ |
+
+**4-0 on Game 3 Kalshi picks.**
+
+**Polymarket:**
+
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| Wembanyama under 12.5 rebounds | 12.5 | 8 reb | ✅ |
+| Castle under 6.5 assists | 6.5 | 5 ast | ✅ |
+| Castle over 14.5 points | 14.5 | 23 pts | ✅ |
+| Vassell over 1.5 assists | 1.5 | 1 ast | ❌ |
+| Harper under 3.5 assists | 3.5 | 4 ast | ❌ |
+
+**3-2 on Game 3 Polymarket picks.**
 
 ---
 
@@ -209,7 +238,8 @@ The model generates forward-looking predictions before each game and tracks real
 |------|--------|------------|
 | Game 1 | 2-1 | — |
 | Game 2 | 3-0 | 4-0 |
-| **Total** | **5-1** | **4-0** |
+| Game 3 | 4-0 | 3-2 |
+| **Total** | **9-1** | **7-2** |
 
 ---
 
