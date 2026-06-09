@@ -225,7 +225,7 @@ All picks were selected from the dashboard's Best Bets list before tip-off.
 | Wembanyama under 12.5 rebounds | 12.5 | 8 reb | ✅ |
 | Castle under 6.5 assists | 6.5 | 5 ast | ✅ |
 | Castle over 14.5 points | 14.5 | 23 pts | ✅ |
-| Vassell over 1.5 assists | 1.5 | 1 ast | ❌ |
+| Vassell over 1.5 assists | 1.5 | 0 ast | ❌ |
 | Harper under 3.5 assists | 3.5 | 4 ast | ❌ |
 
 **3-2 on Game 3 Polymarket picks.**
