@@ -164,9 +164,11 @@ nba-edge-finder/
 
 ## Live Track Record — 2026 NBA Finals
 
-All picks were selected from the dashboard's Best Bets list before tip-off.
+**Knicks won the series 4-1, their first championship since 1973.**
 
-### Game 1 — June 4, 2026 · Knicks 105, Spurs 95 (Knicks lead 1-0)
+All picks were selected from the dashboard's Best Bets list (edge ≥ 18%) before tip-off.
+
+### Game 1 — June 4, 2026 · Knicks 105, Spurs 95
 
 **Kalshi:**
 
@@ -180,7 +182,7 @@ All picks were selected from the dashboard's Best Bets list before tip-off.
 
 ---
 
-### Game 2 — June 6, 2026 · Knicks 105, Spurs 104 (Knicks lead 2-0)
+### Game 2 — June 6, 2026 · Knicks 105, Spurs 104
 
 **Kalshi:**
 
@@ -205,7 +207,7 @@ All picks were selected from the dashboard's Best Bets list before tip-off.
 
 ---
 
-### Game 3 — June 9, 2026 · Spurs 115, Knicks 111 (Knicks lead 2-1)
+### Game 3 — June 9, 2026 · Spurs 115, Knicks 111
 
 **Kalshi:**
 
@@ -232,14 +234,66 @@ All picks were selected from the dashboard's Best Bets list before tip-off.
 
 ---
 
-### Series Record
+### Game 4 — June 11, 2026 · Knicks 107, Spurs 106 (largest comeback in Finals history — 29 pts down)
+
+**Kalshi:**
+
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| Castle over 14.5 points | 14.5 | 13 pts | ❌ |
+| Champagnie over 1.5 threes | 1.5 | 1 three | ❌ |
+
+**0-2 on Game 4 Kalshi picks.**
+
+**Polymarket:**
+
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| Castle over 14.5 points | 14.5 | 13 pts | ❌ |
+| Fox over 4.5 assists | 4.5 | 7 ast | ✅ |
+
+**1-1 on Game 4 Polymarket picks.**
+
+---
+
+### Game 5 — June 14, 2026 · Knicks 94, Spurs 90 · Knicks win series 4-1
+
+**Kalshi:**
+
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| Castle over 14.5 points | 14.5 | 6 pts | ❌ |
+| Champagnie over 1.5 threes | 1.5 | 4 threes | ✅ |
+| Bridges over 1.5 rebounds | 1.5 | 2 reb | ✅ |
+
+**2-1 on Game 5 Kalshi picks.**
+
+**Polymarket:**
+
+| Pick | Line | Actual | Result |
+|------|------|--------|--------|
+| Castle over 14.5 points | 14.5 | 6 pts | ❌ |
+| Shamet over 0.5 rebounds | 0.5 | 1 reb | ✅ |
+| Fox over 4.5 assists | 4.5 | 5 ast | ✅ |
+| Champagnie over 1.5 threes | 1.5 | 4 threes | ✅ |
+| Castle under 5.5 assists | 5.5 | 5 ast | ✅ |
+| Harper under 1.5 threes | 1.5 | 2 threes | ❌ |
+| Wembanyama under 29.5 points | 29.5 | 19 pts | ✅ |
+
+**5-2 on Game 5 Polymarket picks.**
+
+---
+
+### Final Series Record
 
 | Game | Kalshi | Polymarket |
 |------|--------|------------|
 | Game 1 | 2-1 | — |
 | Game 2 | 3-0 | 4-0 |
 | Game 3 | 4-0 | 3-2 |
-| **Total** | **9-1** | **7-2** |
+| Game 4 | 0-2 | 1-1 |
+| Game 5 | 2-1 | 5-2 |
+| **Total** | **11-4** | **13-5** |
 
 ---
 
